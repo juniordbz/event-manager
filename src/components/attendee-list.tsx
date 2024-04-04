@@ -13,12 +13,30 @@ import { Table } from './table/table'
 import { TableHeader } from './table/table-header'
 import { TableCell } from './table/table-cell'
 import { TableRow } from './table/table-row'
-import { ChangeEvent, useState } from 'react'
-import { attendees } from '../data/attendees'
+import { ChangeEvent, useEffect, useState } from 'react'
+
+interface Ateendee {
+  id: string
+  name: string
+  email: string
+  createdAt: string
+  checkedInAt: string | null
+}
 
 export function AttendeeList() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [attendees, setAttendees] = useState<Ateendee[]>([])
+
+  useEffect(() => {
+    fetch(
+      'http://localhost:3333/events/9e9bd979-9d10-4915-b339-3786b1634f33/attendees',
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        setAttendees(data.attendees)
+      })
+  }, [page])
 
   const totalPages = Math.ceil(attendees.length / 10)
 
@@ -81,7 +99,7 @@ export function AttendeeList() {
           </tr>
         </thead>
         <tbody>
-          {attendees.slice((page - 1) * 10, page * 10).map((ateendee) => {
+          {attendees.map((ateendee) => {
             return (
               <TableRow key={ateendee.id}>
                 <TableCell>
@@ -100,16 +118,20 @@ export function AttendeeList() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {formatDistanceToNow(ateendee.createdAr, {
+                  {formatDistanceToNow(ateendee.createdAt, {
                     locale: ptBR,
                     addSuffix: true,
                   })}
                 </TableCell>
                 <TableCell>
-                  {formatDistanceToNow(ateendee.checkedInAt, {
-                    locale: ptBR,
-                    addSuffix: true,
-                  })}
+                  {ateendee.checkedInAt ? (
+                    formatDistanceToNow(ateendee.checkedInAt, {
+                      locale: ptBR,
+                      addSuffix: true,
+                    })
+                  ) : (
+                    <span className="text-zinc-500">Não fez check-in</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <IconButton transparent>
