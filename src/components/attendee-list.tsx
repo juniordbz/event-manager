@@ -24,42 +24,87 @@ interface Ateendee {
 }
 
 export function AttendeeList() {
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const [page, setPage] = useState(() => {
+    const url = new URL(window.location.toString())
+
+    if (url.searchParams.has('page')) {
+      return Number(url.searchParams.get('page'))
+    }
+
+    return 1
+  })
+
+  const [search, setSearch] = useState(() => {
+    const url = new URL(window.location.toString())
+
+    if (url.searchParams.has('search')) {
+      return url.searchParams.get('search') ?? ''
+    }
+
+    return ''
+  })
   const [attendees, setAttendees] = useState<Ateendee[]>([])
   const [total, setTotal] = useState(0)
 
+  const totalPages = Math.ceil(total / 10)
+
   useEffect(() => {
-    fetch(
-      `http://localhost:3333/events/9e9bd979-9d10-4915-b339-3786b1634f33/attendees?pageIndex=${page - 1}`,
+    const url = new URL(
+      'http://localhost:3333/events/9e9bd979-9d10-4915-b339-3786b1634f33/attendees',
     )
+
+    url.searchParams.set('pageIndex', String(page - 1))
+    if (search.length > 0) {
+      url.searchParams.set('query', search)
+    }
+
+    fetch(url)
       .then((response) => response.json())
       .then((data) => {
         setAttendees(data.attendees)
         setTotal(data.total)
       })
-  }, [page])
+  }, [page, search])
 
-  const totalPages = Math.ceil(total / 10)
+  function setCurrentPage(page: number) {
+    const url = new URL(window.location.toString())
+
+    url.searchParams.set('page', String(page))
+
+    window.history.pushState({}, '', url)
+
+    setPage(page)
+  }
+
+  function setCurrentSearch(search: string) {
+    const url = new URL(window.location.toString())
+
+    url.searchParams.set('search', search)
+
+    window.history.pushState({}, '', url)
+
+    setSearch(search)
+  }
 
   function onSearchInputChanged(e: ChangeEvent<HTMLInputElement>) {
-    setSearch(e.target.value)
+    setCurrentSearch(e.target.value)
+    setCurrentPage(1)
   }
 
   function goToNextPage() {
-    setPage(page + 1)
+    setCurrentPage(page + 1)
   }
 
   function goToPreviousPage() {
-    setPage(page - 1)
+    setCurrentPage(page - 1)
   }
 
   function goToFirstPage() {
-    setPage(1)
+    setCurrentPage(1)
   }
 
   function goToLastPage() {
-    setPage(totalPages)
+    setCurrentPage(totalPages)
   }
 
   return (
@@ -70,12 +115,12 @@ export function AttendeeList() {
           <Search className="size-4 text-emerald-300" />
           <input
             onChange={onSearchInputChanged}
-            className="bg-transparent flex-1 outline-none h-auto border-0 p-0 text-sm "
+            value={search}
+            className="focus:ring-0 bg-transparent flex-1 outline-none h-auto border-0 p-0 text-sm "
             type="text"
             placeholder="Buscar participantes..."
           />
         </div>
-        {search}
       </div>
 
       <Table>
@@ -87,7 +132,7 @@ export function AttendeeList() {
             >
               <input
                 type="checkbox"
-                className="size-4 bg-black/20 rounded border-white/10 checked:bg-orange-400"
+                className="size-4 bg-black/20 rounded broder border-black/20 checked:bg-orange-400 focus:ring-0 text-orange-400"
               />
             </TableHeader>
             <TableHeader>Código</TableHeader>
@@ -107,7 +152,7 @@ export function AttendeeList() {
                 <TableCell>
                   <input
                     type="checkbox"
-                    className="size-4 bg-black/20 rounded border-white/10"
+                    className="size-4 bg-black/20 rounded broder border-black/20 checked:bg-orange-400 focus:ring-0 text-orange-400"
                   />
                 </TableCell>
                 <TableCell> {ateendee.id}</TableCell>
