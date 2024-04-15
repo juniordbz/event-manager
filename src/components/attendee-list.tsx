@@ -50,7 +50,7 @@ export function AttendeeList() {
 
   useEffect(() => {
     const url = new URL(
-      'http://localhost:3333/events/9e9bd979-9d10-4915-b339-3786b1634f33/attendees',
+      'https://server-event-manager.vercel.app/events/b11e106b-4ef7-43f9-a7fc-002ce48f7ca3/attendees',
     )
 
     url.searchParams.set('pageIndex', String(page - 1))
